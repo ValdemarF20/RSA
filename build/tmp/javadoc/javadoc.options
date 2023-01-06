@@ -1,0 +1,7 @@
+-classpath 'C:\\Users\\Valdemar\\IdeaProjects\\RSA\\build\\classes\\java\\main;C:\\Users\\Valdemar\\IdeaProjects\\RSA\\build\\classes\\kotlin\\main;C:\\Users\\Valdemar\\IdeaProjects\\RSA\\build\\resources\\main;C:\\Users\\Valdemar\\.gradle\\wrapper\\dists\\gradle-7.3.3-bin\\caches\\modules-2\\files-2.1\\org.jetbrains.kotlin\\kotlin-stdlib-jdk8\\1.6.0\\baf82c475e9372c25407f3d132439e4aa803b8b8\\kotlin-stdlib-jdk8-1.6.0.jar;C:\\Users\\Valdemar\\.gradle\\wrapper\\dists\\gradle-7.3.3-bin\\caches\\modules-2\\files-2.1\\org.jetbrains.kotlin\\kotlin-stdlib-jdk7\\1.6.0\\da6bdc87391322974a43ccc00a25536ae74dad51\\kotlin-stdlib-jdk7-1.6.0.jar;C:\\Users\\Valdemar\\.gradle\\wrapper\\dists\\gradle-7.3.3-bin\\caches\\modules-2\\files-2.1\\org.jetbrains.kotlin\\kotlin-stdlib\\1.6.0\\a40b8b22529b733892edf4b73468ce598bb17f04\\kotlin-stdlib-1.6.0.jar;C:\\Users\\Valdemar\\.gradle\\wrapper\\dists\\gradle-7.3.3-bin\\caches\\modules-2\\files-2.1\\org.jetbrains\\annotations\\13.0\\919f0dfe192fb4e063e7dacadee7f8bb9a2672a9\\annotations-13.0.jar;C:\\Users\\Valdemar\\.gradle\\wrapper\\dists\\gradle-7.3.3-bin\\caches\\modules-2\\files-2.1\\org.jetbrains.kotlin\\kotlin-stdlib-common\\1.6.0\\7857e365f925cfa060f941c1357cda1f8790502c\\kotlin-stdlib-common-1.6.0.jar'
+-d 'C:\\Users\\Valdemar\\IdeaProjects\\RSA\\build\\docs\\javadoc'
+-doctitle 'RSA 1.0 API'
+-notimestamp 
+-quiet 
+-windowtitle 'RSA 1.0 API'
+'C:\\Users\\Valdemar\\IdeaProjects\\RSA\\src\\main\\java\\net\\valdemarf\\RSA.java'
