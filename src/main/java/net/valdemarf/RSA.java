@@ -1,5 +1,7 @@
 package net.valdemarf;
 
+import kotlin.Pair;
+
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.Scanner;
@@ -9,8 +11,9 @@ import java.util.Scanner;
  */
 public class RSA {
     private final BigInteger privateKey; // d
-    private final BigInteger publicKey; // e
+    private final BigInteger publicExponent = new BigInteger("65537"); // common value (e) in practice = 2^16 + 1
     private static BigInteger modulus; // n
+    private final Pair<BigInteger, BigInteger> publicKey; // This variable is not used within the code, but would be used in a real example
 
     // generate an N-bit (roughly) public and private key
     RSA(BigInteger messageNum) {
@@ -25,10 +28,10 @@ public class RSA {
             p = p.nextProbablePrime();
             modulus = p.multiply(q);
         }
+        BigInteger phi = (p.subtract(BigInteger.ONE)).multiply(q.subtract(BigInteger.ONE)); // Euler totient function - used to calculate the private key
 
-        BigInteger phi = (p.subtract(BigInteger.ONE)).multiply(q.subtract(BigInteger.ONE)); // Totient function - used to calculate the private key
-        publicKey = new BigInteger("65537");     // common value in practice = 2^16 + 1
-        privateKey = publicKey.modInverse(phi); // e^(-1) % phi
+        publicKey = new Pair<>(publicExponent, modulus);
+        privateKey = publicExponent.modInverse(phi); // e^(-1) % phi
     }
 
     /**
@@ -42,7 +45,7 @@ public class RSA {
             System.out.println("Improper message input");
             return null;
         }
-        return message.modPow(publicKey, modulus);
+        return message.modPow(publicExponent, modulus);
     }
 
     /**
@@ -65,20 +68,27 @@ public class RSA {
      */
     public String toString() {
         String s = "";
-        s += "public  = " + publicKey + "\n";
-        s += "private = " + privateKey + "\n";
+        s += "public  = " + publicExponent + "\n\n";
+        s += "private = " + privateKey + "\n\n";
         s += "modulus = " + modulus;
         return s;
     }
 
     /**
      * Main method that runs when the application starts
-     * @param args Only one argument which is an input text that will be encrypted and decrypted
+     * @param args Provide no args
      */
     public static void main(String[] args) {
-        // Check if args are entered correctly by the user
+        // Get message from user
+        System.out.println("Message:");
         Scanner scanner = new Scanner(System.in);
         String message = scanner.nextLine();
+        System.out.println("\n");
+
+        // Check if args are entered correctly by the user
+        if(message.isEmpty() || message.isBlank()) {
+            System.out.println("Cannot use empty string");
+        }
 
         // Convert the message to bytes, and then encrypt and decrypt using those bytes
         byte[] bytes = message.getBytes();
@@ -90,8 +100,9 @@ public class RSA {
         BigInteger decrypt = key.decrypt(encrypt);
 
         // Output
-        System.out.println("message = " + message + " -|- message number = " + messageNum);
-        System.out.println("encrypted message = " + (new String(encrypt.toByteArray())) + " -|- encrypted number = " + encrypt);
+        System.out.println("\n" + "message = " + message + " -|- message number = " + messageNum + "\n");
+        System.out.println("encrypted message = " + (new String(encrypt.toByteArray())) + "\n");
+        System.out.println("encrypted number = " + encrypt + "\n");
         System.out.println("decrypted message = " + (new String(decrypt.toByteArray())) + " -|- decrypted number = " + decrypt);
     }
 }
