@@ -12,10 +12,9 @@ import java.util.Scanner;
  * Encrypts a message and decrypts it again
  */
 public class RSA {
-    private static BigInteger privatNøgle; // d
-    private final BigInteger offentligEksponent = new BigInteger("65537"); // common value (e) in practice = 2^16 + 1
-    private static BigInteger modulus; // n
-    private Pair<BigInteger, BigInteger> offentligNøgle; // This variable is not used within the code, but would be used in a real example
+    private static BigInteger PRIVAT_NOEGLE; // d
+    private static final BigInteger OFFENTLIG_EKSPONENT = new BigInteger("65537"); // common value (e) in practice = 2^16 + 1
+    private static BigInteger MODULUS; // n
 
     // generate an N-bit (roughly) public and private key
     RSA(BigInteger beskedTal) {
@@ -23,23 +22,19 @@ public class RSA {
         final SecureRandom tilfældig = new SecureRandom();
         BigInteger p = BigInteger.probablePrime(2048, tilfældig);
         BigInteger q = BigInteger.probablePrime(2048, tilfældig);
-        modulus = p.multiply(q);
-        if(beskedTal.equals(BigInteger.ONE.negate())) {
-            beskedTal = modulus.subtract(BigInteger.ONE);
-        }
+        MODULUS = p.multiply(q);
 
         // If the modulus is less than the input, generate a new value
-        while(modulus.compareTo(beskedTal) < 0 || p.equals(q)) {
+        while(MODULUS.compareTo(beskedTal) < 0 || p.equals(q)) {
             p = p.nextProbablePrime();
-            modulus = p.multiply(q);
+            MODULUS = p.multiply(q);
         }
         BigInteger phi = (p.subtract(BigInteger.ONE)).multiply(q.subtract(BigInteger.ONE)); // Euler totient function - used to calculate the private key
 
-        offentligNøgle = new Pair<>(offentligEksponent, modulus);
-        privatNøgle = offentligEksponent.modInverse(phi); // e^(-1) % phi
+        PRIVAT_NOEGLE = OFFENTLIG_EKSPONENT.modInverse(phi); // e^(-1) % phi
     }
 
-    RSA(BigInteger privatNøgle, BigInteger modulus) {}
+    RSA() {}
 
     /**
      * Krypterer et tal ved brug af følgende formel:
@@ -52,7 +47,7 @@ public class RSA {
             System.out.println("Forkert besked input");
             return null;
         }
-        return besked.modPow(offentligEksponent, modulus);
+        return besked.modPow(OFFENTLIG_EKSPONENT, MODULUS);
     }
 
     /**
@@ -66,7 +61,7 @@ public class RSA {
             System.out.println("Forkert kryptering input");
             return null;
         }
-        return krypteret.modPow(privatNøgle, modulus);
+        return krypteret.modPow(PRIVAT_NOEGLE, MODULUS);
     }
 
     /**
@@ -75,9 +70,12 @@ public class RSA {
      */
     public String toString() {
         String s = "";
-        s += "public  = " + offentligEksponent + "\n\n";
-        s += "private = " + privatNøgle + "\n\n";
-        s += "modulus = " + modulus + "\n\n";
+        if(PRIVAT_NOEGLE == null) {
+            s += "public  = " + OFFENTLIG_EKSPONENT + "\n\n";
+        } else {
+            s += "private = " + PRIVAT_NOEGLE + "\n\n";
+        }
+        s += "modulus = " + MODULUS + "\n\n";
         return s;
     }
 
@@ -88,86 +86,142 @@ public class RSA {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         List<String> informationer = new ArrayList<>();
+
+        // Enten krypter eller dekrypter
         System.out.println("Valg (krypter eller dekrypter)");
         String valg = scanner.nextLine().toLowerCase();
 
+        // Få besked fra bruger
+        BigInteger input = faaInput(scanner);
+        if(input == null) {
+            return;
+        }
+        RSA objekt;
         if(valg.equals("krypter")) {
-            // Få besked fra bruger
-            System.out.println("Besked:");
-            String besked = scanner.nextLine();
-
-            // Tjek om beskeden er gyldig
-            if(besked.isEmpty() || besked.isBlank()) {
-                System.out.println("Kan ikke benytte tom tekst");
+            objekt = genererObjekt(scanner, input, false);
+            if(objekt == null) {
                 return;
             }
 
-            // Konverter beskeden til bytes, og krypter ved brug af disse
-            byte[] bytes = besked.getBytes();
-            BigInteger beskedTal = new BigInteger(bytes);
-            RSA nøgle = new RSA(beskedTal);
-            informationer.addAll(nøgle.krypterInput(besked, beskedTal));
+            informationer.addAll(krypterInput(objekt, input));
 
         } else if(valg.equals("dekrypter")) {
-            System.out.println("Selvvagt nøgle og modulus?");
-            String selvvagt = scanner.nextLine().toLowerCase();
-            RSA nøgle;
-            if(selvvagt.equals("ja")) {
-                System.out.println("Nøgle:");
-                privatNøgle = scanner.nextBigInteger();
-                System.out.println("Modulus:");
-                modulus = scanner.nextBigInteger();
-                nøgle = new RSA(privatNøgle, modulus);
-            } else {
-                nøgle = new RSA(BigInteger.ONE.negate());
+            objekt = genererObjekt(scanner, input, true);
+            if(objekt == null) {
+                return;
             }
-            informationer.addAll(nøgle.dekrypterInput(scanner));
+            informationer.addAll(dekrypterInput(objekt, input));
+        } else {
+            System.out.println("Forkert input");
+            return;
         }
 
         // Output
         System.out.println("\n");
+        System.out.println(objekt);
         for (String information : informationer) {
             System.out.println(information);
         }
     }
 
-    public List<String> dekrypterInput(Scanner scanner) {
-        String ignorer = scanner.nextLine().toLowerCase(); // Scanner kan ikke se den tidligere nye linje og skal derfor opdateres
-        System.out.println("Besked eller tal?");
-        String svar = scanner.nextLine().toLowerCase();
-
-        System.out.println("Indsæt værdi:");
-        String værdi = scanner.nextLine().toLowerCase();
-
-        BigInteger krypteretInput;
-        if(svar.equals("besked")) {
-            byte[] bytes = værdi.getBytes();
-            krypteretInput = new BigInteger(bytes);
-        } else if(svar.equals("tal")) {
-            krypteretInput = new BigInteger(værdi);
-        } else {
-            System.out.println("Forkert input");
-            return null;
-        }
-        BigInteger dekrypteret = this.dekrypter(krypteretInput);
+    /**
+     * Funktion brugt til at dekryptere input besked eller tal
+     * @param objekt Objekt af klassen
+     * @param input Input besked eller tal der skal dekrypteres
+     * @return En liste af informationer der printes i slutningen af programmet
+     */
+    public static List<String> dekrypterInput(RSA objekt, BigInteger input) {
+        BigInteger dekrypteret = objekt.dekrypter(input);
 
         // Tilføj informationer
         List<String> informationer = new ArrayList<>(3);
-        informationer.add(this.toString());
+        informationer.add(objekt.toString());
         informationer.add("Dekrypteret besked = " + (new String(dekrypteret.toByteArray())));
         informationer.add("Dekrypteret tal = " + dekrypteret);
         return informationer;
     }
 
-    public List<String> krypterInput(String besked, BigInteger beskedTal) {
-        BigInteger krypteret = this.krypter(beskedTal);
+    /**
+     * Funktion brugt til at kryptere input besked eller tal
+     * @param objekt Objekt af klassen
+     * @param input Input besked eller tal der skal krypteres
+     * @return En liste af informationer der printes i slutningen af programmet
+     */
+    public static List<String> krypterInput(RSA objekt, BigInteger input) {
+        BigInteger krypteret = objekt.krypter(input);
 
         // Tilføj informationer
         List<String> informationer = new ArrayList<>(4);
-        informationer.add("\n" + "besked = " + besked + " -|- besked tal = " + beskedTal + "\n");
-        informationer.add(this.toString());
+        informationer.add("\n" + "Input = " + input + "\n");
+        informationer.add(objekt.toString());
         informationer.add("Krypteret besked = \n" + (new String(krypteret.toByteArray())) + "\n");
         informationer.add("Krypteret tal = \n" + krypteret + "\n");
         return informationer;
+    }
+
+    /**
+     * Funktion brugt til at få input besked eller tal
+     * @param scanner Scanner brugt til at skaffe information fra bruger, via output stream
+     * @return En tal-værdi for inputtet
+     * @throws NumberFormatException Hvis der vælges tal som input, men der ikke skrives et tal efterfølgende
+     */
+    public static BigInteger faaInput(Scanner scanner) throws NumberFormatException {
+        System.out.println("Besked eller tal?");
+        String svar = scanner.nextLine().toLowerCase();
+        if(!svar.equals("besked") && !svar.equals("tal")) {
+            return null;
+        }
+        System.out.println("Indsæt " + svar + ":");
+        String vaerdi = scanner.nextLine();
+
+        BigInteger input;
+        if(svar.equals("besked")) {
+            input = new BigInteger(vaerdi.getBytes());
+        } else {
+            input = new BigInteger(vaerdi);
+        }
+        return input;
+    }
+
+    /**
+     * Funktion brugt til at genererer et objekt af klassen
+     * @param scanner Scanner brugt til at skaffe information fra bruger, via output stream
+     * @param input Input besked eller tal der skal krypteres eller dekrypteres
+     * @param dekryptering Sandt hvis input skal dekrypteres og falsk hvis det skal krypteres
+     * @return Et objekt af klassen
+     */
+    public static RSA genererObjekt(Scanner scanner, BigInteger input, boolean dekryptering) {
+        RSA objekt;
+        if(dekryptering) { // Den private nøgle og modulus skal bruges til dekryptering
+            System.out.println("Selvvalgt privat nøgle og modulus?");
+            String selvvalgt = scanner.nextLine().toLowerCase();
+            if(selvvalgt.equals("ja")) {
+                System.out.println("Privat nøgle:");
+                PRIVAT_NOEGLE = scanner.nextBigInteger();
+                System.out.println("Modulus:");
+                MODULUS = scanner.nextBigInteger();
+                objekt = new RSA();
+            } else if(selvvalgt.equals("nej")) {
+                objekt = new RSA(input);
+            } else {
+                System.out.println("Forkert input");
+                return null;
+            }
+        } else { // Kun modulus skal bruges til kryptering, og derfor ikke den private nøgle
+            System.out.println("Selvvalgt modulus?");
+            String selvvalgt = scanner.nextLine().toLowerCase();
+            if(selvvalgt.equals("ja")) {
+                System.out.println("Modulus:");
+                MODULUS = scanner.nextBigInteger();
+                objekt = new RSA();
+            } else if(selvvalgt.equals("nej")) {
+                objekt = new RSA(input);
+            } else {
+                System.out.println("Forkert input");
+                return null;
+            }
+        }
+
+        return objekt;
     }
 }
