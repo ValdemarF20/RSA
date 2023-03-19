@@ -7,32 +7,35 @@ import java.util.List;
 import java.util.Scanner;
 
 /**
- * Encrypts a message and decrypts it again
+ * Kan kryptere eller dekryptere en besked eller et tal
  */
 public class RSA {
     private static BigInteger PRIVAT_NOEGLE; // d
-    private static final BigInteger OFFENTLIG_EKSPONENT = new BigInteger("65537"); // common value (e) in practice = 2^16 + 1
+    private static final BigInteger OFFENTLIG_EKSPONENT = new BigInteger("65537"); // Standar værdi for e, beregnes med = 2^16 + 1
     private static BigInteger MODULUS; // n
 
     // generate an N-bit (roughly) public and private key
-    RSA(BigInteger beskedTal) {
-        // Generate two random prime numbers with given bitLength
+    RSA(BigInteger beskedTal, boolean dekryptering) {
+        // Generer to primtal med given bit længde
         final SecureRandom tilfaeldig = new SecureRandom();
         BigInteger p = BigInteger.probablePrime(2048, tilfaeldig);
         BigInteger q = BigInteger.probablePrime(2048, tilfaeldig);
         MODULUS = p.multiply(q);
 
-        // If the modulus is less than the input, generate a new value
+        // Hvis modulus er mindre end input tallet, generer en ny værdi
         while(MODULUS.compareTo(beskedTal) < 0 || p.equals(q)) {
             p = p.nextProbablePrime();
             MODULUS = p.multiply(q);
         }
-        BigInteger phi = (p.subtract(BigInteger.ONE)).multiply(q.subtract(BigInteger.ONE)); // Euler totient function - used to calculate the private key
 
-        PRIVAT_NOEGLE = OFFENTLIG_EKSPONENT.modInverse(phi); // e^(-1) % phi
+        if(dekryptering) { // Skal kun brugt privat nøgle til dekryptering
+            // Euler totient funktion - brugt til at beregne privat nøgle
+            BigInteger phi = (p.subtract(BigInteger.ONE)).multiply(q.subtract(BigInteger.ONE));
+            PRIVAT_NOEGLE = OFFENTLIG_EKSPONENT.modInverse(phi); // e^(-1) % phi (Euklids algoritme)
+        }
     }
 
-    RSA() {}
+    RSA() {} // Brugt til at køre programmet uden at genererer privat nøgle og modulus
 
     /**
      * Krypterer et tal ved brug af følgende formel:
@@ -101,14 +104,14 @@ public class RSA {
                 return;
             }
 
-            informationer.addAll(krypterInput(objekt, input));
+            informationer.addAll(objekt.krypterInput(input));
 
         } else if(valg.equals("dekrypter")) {
             objekt = genererObjekt(scanner, input, true);
             if(objekt == null) {
                 return;
             }
-            informationer.addAll(dekrypterInput(objekt, input));
+            informationer.addAll(objekt.dekrypterInput(input));
         } else {
             System.out.println("Forkert input");
             return;
@@ -124,16 +127,15 @@ public class RSA {
 
     /**
      * Funktion brugt til at dekryptere input besked eller tal
-     * @param objekt Objekt af klassen
      * @param input Input besked eller tal der skal dekrypteres
      * @return En liste af informationer der printes i slutningen af programmet
      */
-    public static List<String> dekrypterInput(RSA objekt, BigInteger input) {
-        BigInteger dekrypteret = objekt.dekrypter(input);
+    public List<String> dekrypterInput(BigInteger input) {
+        BigInteger dekrypteret = this.dekrypter(input);
 
         // Tilføj informationer
         List<String> informationer = new ArrayList<>(3);
-        informationer.add(objekt.toString());
+        informationer.add(this.toString());
         informationer.add("Dekrypteret besked = " + (new String(dekrypteret.toByteArray())));
         informationer.add("Dekrypteret tal = " + dekrypteret);
         return informationer;
@@ -141,17 +143,16 @@ public class RSA {
 
     /**
      * Funktion brugt til at kryptere input besked eller tal
-     * @param objekt Objekt af klassen
      * @param input Input besked eller tal der skal krypteres
      * @return En liste af informationer der printes i slutningen af programmet
      */
-    public static List<String> krypterInput(RSA objekt, BigInteger input) {
-        BigInteger krypteret = objekt.krypter(input);
+    public List<String> krypterInput(BigInteger input) {
+        BigInteger krypteret = this.krypter(input);
 
         // Tilføj informationer
         List<String> informationer = new ArrayList<>(4);
         informationer.add("\n" + "Input = " + input + "\n");
-        informationer.add(objekt.toString());
+        informationer.add(this.toString());
         informationer.add("Krypteret besked = \n" + (new String(krypteret.toByteArray())) + "\n");
         informationer.add("Krypteret tal = \n" + krypteret + "\n");
         return informationer;
@@ -200,7 +201,7 @@ public class RSA {
                 MODULUS = scanner.nextBigInteger();
                 objekt = new RSA();
             } else if(selvvalgt.equals("nej")) {
-                objekt = new RSA(input);
+                objekt = new RSA(input, true);
             } else {
                 System.out.println("Forkert input");
                 return null;
@@ -213,13 +214,12 @@ public class RSA {
                 MODULUS = scanner.nextBigInteger();
                 objekt = new RSA();
             } else if(selvvalgt.equals("nej")) {
-                objekt = new RSA(input);
+                objekt = new RSA(input, false);
             } else {
                 System.out.println("Forkert input");
                 return null;
             }
         }
-
         return objekt;
     }
 }
