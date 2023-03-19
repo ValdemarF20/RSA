@@ -1,7 +1,5 @@
 package net.valdemarf;
 
-import kotlin.Pair;
-
 import java.math.BigInteger;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -19,9 +17,9 @@ public class RSA {
     // generate an N-bit (roughly) public and private key
     RSA(BigInteger beskedTal) {
         // Generate two random prime numbers with given bitLength
-        final SecureRandom tilfældig = new SecureRandom();
-        BigInteger p = BigInteger.probablePrime(2048, tilfældig);
-        BigInteger q = BigInteger.probablePrime(2048, tilfældig);
+        final SecureRandom tilfaeldig = new SecureRandom();
+        BigInteger p = BigInteger.probablePrime(2048, tilfaeldig);
+        BigInteger q = BigInteger.probablePrime(2048, tilfaeldig);
         MODULUS = p.multiply(q);
 
         // If the modulus is less than the input, generate a new value
